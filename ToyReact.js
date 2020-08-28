@@ -27,6 +27,7 @@ export class Component {
     this._vdom[RENDER_TO_DOM](range);
   }
 
+  // 更新dom树
   update() {
 
     let isSameNode = (oldNode, newNode) => {
