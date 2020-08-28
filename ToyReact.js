@@ -9,6 +9,8 @@ export class Component {
     this.children = [];
   }
 
+
+  // 获取虚报dom
   get vdom() {
     return this.render().vdom;
   }
@@ -30,6 +32,7 @@ export class Component {
   // 更新dom树
   update() {
 
+    // 定义一个isSameNode 方法来做虚拟DOM的diff
     let isSameNode = (oldNode, newNode) => {
       if(oldNode.type !== newNode.type) {
         return false;
@@ -54,6 +57,7 @@ export class Component {
     }
 
     let update = (oldNode, newNode) => {
+      // 判断新的虚拟DOM节点与老的虚拟DOM节点 是否一样, 如果一样那么就直接替换range
       if(!isSameNode(oldNode, newNode)) {
           newNode[RENDER_TO_DOM](oldNode._range)
           return;
@@ -70,7 +74,7 @@ export class Component {
 
       let tailRange = oldChildren[oldChildren.length -1]._range;
 
-
+      // 通过递归的方式去比对子节点。 如果节点不一样, 那么就更新当前节点下的range, 从而达到部分更新的效果。
       for (let index = 0; index < newChildren.length; index++) {
         const newChild = newChildren[index];
         const oldChild = oldChildren[index];
@@ -92,13 +96,16 @@ export class Component {
 
   }
 
+  // setState方法主要是将新的state与老的state比较, 然后进行一个深拷贝的操作。
   setState(newState) {
+    // 如果this.state不存在或者类型不是对象的时候, 我们直接使用新的state去替换它。
     if(this.state === null && typeof this.state !== 'object') {
       this.state = newState;
       this.update();
       return;
     }
 
+    // 然后通过递归将新的state中的值直接赋值到旧的对应的state值。
     let merge = (oldState, newState) => {
         for (const key in newState) {
           if(oldState[key] === null || typeof oldState[key] !== 'object') {
@@ -141,11 +148,15 @@ class ElementWrapper extends Component {
       this._range = range;
       let root = document.createElement(this.type);
 
+      // 第一部分的for循环其实做的就是 setAttribute 的事情, 将属性赋值到元素上,
       for (const name in this.props) {
         let value = this.props[name];
+        // 只有元素节点上才能绑定事件, 因此我们肯定是在ElementWrapper类中进行修改。
+        // 我们写一个简单的正则来匹配所有on开头的事件, 比如onClick, onHover, onMouseUp.....
         if (name.match(/^on([\s\S]+)/)) {
           root.addEventListener(RegExp.$1.replace(/^[\s\S]/, s => s.toLowerCase()), value);
         }
+        // 如果属性是className，则需要把className转为css能够识别的class，这样样式才能生效
         if (name === 'className') {
           root.setAttribute('class', value);
         } else {
@@ -155,7 +166,8 @@ class ElementWrapper extends Component {
 
       if(!this.vchildren)
       this.vchildren = this.children.map(item => item.vdom);
-    
+      
+      // 第二部分的for循环做的事情则是通过递归的方式插入child.
       for (const child of this.vchildren) {
           const childRange = document.createRange();
           childRange.setStart(root, root.childNodes.length);
