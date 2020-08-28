@@ -34,19 +34,27 @@ export class Component {
 
     // 定义一个isSameNode 方法来做虚拟DOM的diff
     let isSameNode = (oldNode, newNode) => {
+      // 判断节点类型是不是一样
       if(oldNode.type !== newNode.type) {
         return false;
       }
 
+      // 新老节点的props值不同
       for (const key in newNode.props) {
         if (oldNode.props[key] !== newNode.props[key]) {
+          // 在比对事件的时候, 我们每次都会实例化一个新的事件函数。这就导致了我们的ToyReact处理不了关于事件调度方面的diff了。
+          // 如果想要达到React那样, 只更新某个节点 这样的效果的话, 我们可以采取最残暴的手法, 直接忽略所有的事件。
+          if(typeof newNode.props[key] !== 'function') {
             return false;
+          }
         }
       }
 
+      // 新节点的props少于老节点的props
       if(Object.keys(oldNode.props).length >  Object.keys(newNode.props).length)
       return false;
 
+      // 如果文本节点的内容修改了
       if(newNode.type === "#text") {
         if(newNode.content !== oldNode.content) {
           return false;
