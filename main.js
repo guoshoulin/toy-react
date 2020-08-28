@@ -6,6 +6,7 @@ class Square extends Component {
       <button className="square" onClick={this.props.onClick}>
         {this.props.value}
       </button>
+      
     );
   }
 }
